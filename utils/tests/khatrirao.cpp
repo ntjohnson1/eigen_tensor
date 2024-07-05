@@ -3,7 +3,7 @@
 
 using namespace ttb;
 
-TEST_CASE("Smoke test", "[smoke]") {
+TEST_CASE("Smoke test", "[khatrirao]") {
   std::vector<Eigen::Tensor<float, 2>> factors;
   Eigen::Tensor<float, 2> original(2, 3);
   original.setZero();
@@ -11,7 +11,7 @@ TEST_CASE("Smoke test", "[smoke]") {
   auto result = khatrirao(factors);
 }
 
-TEST_CASE("Column Vectors", "[columns]") {
+TEST_CASE("Column Vectors", "[khatrirao]") {
   Eigen::Tensor<float, 2> factor(3, 1);
   factor.setConstant(2.);
   std::vector<Eigen::Tensor<float, 2>> factors = {factor, factor};
@@ -29,7 +29,7 @@ TEST_CASE("Column Vectors", "[columns]") {
   REQUIRE(sum_correct(0) == result.size());
 };
 
-TEST_CASE("Row Vectors", "[rows]") {
+TEST_CASE("Row Vectors", "[khatrirao]") {
   Eigen::Tensor<float, 2> factor(1, 3);
   factor.setConstant(2.);
   std::vector<Eigen::Tensor<float, 2>> factors = {factor, factor};

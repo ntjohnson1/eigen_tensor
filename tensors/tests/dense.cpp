@@ -2,18 +2,18 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
-TEST_CASE("Constructor smoke test", "[constructor]") {
+TEST_CASE("Dense Constructor", "[dense]") {
   Eigen::Tensor<float, 3> original(1, 2, 3);
   ttb::Dense foo(original);
 }
 
-TEST_CASE("Ndims", "[ndims]") {
+TEST_CASE("Dense ndims", "[dense]") {
   Eigen::Tensor<float, 3> original(1, 2, 3);
   ttb::Dense foo(original);
   REQUIRE(foo.ndims() == 3);
 }
 
-TEST_CASE("Norm", "[norm]") {
+TEST_CASE("Dense norm", "[dense]") {
   Eigen::Tensor<float, 4> original(2, 2, 2, 2);
   original.setZero();
   ttb::Dense foo(original);
@@ -23,14 +23,14 @@ TEST_CASE("Norm", "[norm]") {
   REQUIRE(bar.norm() == 4.0);
 }
 
-TEST_CASE("Innerprod", "[innerprod]") {
+TEST_CASE("Dense innerprod", "[dense]") {
   Eigen::Tensor<float, 4> original(2, 2, 2, 2);
   original.setConstant(1.);
   ttb::Dense bar(original);
   REQUIRE(bar.innerprod(bar) == 16.0);
 }
 
-TEST_CASE("Mttkrp", "[mttkrp]") {
+TEST_CASE("Dense mttkrp", "[dense]") {
   Eigen::Tensor<float, 3> array(2, 3, 4);
   array.setConstant(1.);
   ttb::Dense tensor(array);

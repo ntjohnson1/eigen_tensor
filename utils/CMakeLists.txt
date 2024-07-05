@@ -11,3 +11,5 @@ target_compile_features(${TTB_UTILS} INTERFACE cxx_std_17)
 
 add_executable(${TTB_UTILS}_tests tests/khatrirao.cpp)
 target_link_libraries(${TTB_UTILS}_tests PRIVATE Catch2::Catch2WithMain ${TTB_UTILS})
+
+catch_discover_tests(${TTB_UTILS}_tests)

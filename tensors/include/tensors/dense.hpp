@@ -121,7 +121,7 @@ public:
           // auto prepare_ur =
           ur.slice(offsets_3d, extents_3d).reshape(ur_slice);
       v.slice(offsets_2d, extents_2d) =
-        prepare_y.contract(prepare_ur, dot_product);
+          prepare_y.contract(prepare_ur, dot_product);
     }
 
     return v;
