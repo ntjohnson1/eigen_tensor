@@ -14,14 +14,14 @@ protected:
 public:
   Dense(Eigen::Tensor<dtype, rank> tensor) : tensor_(tensor) {}
 
-  size_t ndims() { return size_t(tensor_.NumDimensions); }
+  size_t ndims() const { return size_t(tensor_.NumDimensions); }
 
-  dtype norm() {
+  dtype norm() const {
     Eigen::Tensor<dtype, 0> two_norm = tensor_.square().sum().sqrt();
     return two_norm(0);
   }
 
-  dtype innerprod(Dense<dtype, rank> &other) {
+  dtype innerprod(Dense<dtype, rank> &other) const {
     std::array<Eigen::IndexPair<int>, rank> contraction_dims;
     for (int i = 0; i < rank; ++i) {
       contraction_dims[i] = Eigen::IndexPair<int>(i, i);
@@ -32,7 +32,7 @@ public:
   }
 
   Eigen::Tensor<dtype, 2>
-  mttkrp(const std::vector<Eigen::Tensor<dtype, 2>> &factors, size_t n) {
+  mttkrp(const std::vector<Eigen::Tensor<dtype, 2>> &factors, size_t n) const {
     static_assert(rank >= 2,
                   "MTTKRP is invalid for tensors wiht fewer than 2 dimensions");
     if (factors.size() != rank) {

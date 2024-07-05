@@ -12,7 +12,7 @@ target_link_libraries(${TTB_TENSORS} INTERFACE
 )
 target_compile_features(${TTB_TENSORS} INTERFACE cxx_std_17)
 
-add_executable(${TTB_TENSORS}_tests tests/dense.cpp)
+add_executable(${TTB_TENSORS}_tests tests/dense.cpp tests/kruskal.cpp)
 target_link_libraries(${TTB_TENSORS}_tests PRIVATE Catch2::Catch2WithMain ${CMAKE_PROJECT_NAME}_tensors)
 
 catch_discover_tests(${TTB_TENSORS}_tests)
