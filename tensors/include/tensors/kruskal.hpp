@@ -1,4 +1,7 @@
 #pragma once
+#include "utils/eigen_helpers.hpp"
+#include <cmath>
+#include <optional>
 #include <unsupported/Eigen/CXX11/Tensor>
 
 namespace ttb {
@@ -26,6 +29,13 @@ public:
     default_weights.setConstant(1.);
     weights_ = default_weights;
   }
+  // FIXME: Some ops are hard to validate without seeing the values
+  // Some indexing is easier peeking at the values, otherwise will need to
+  // use friend. Should think more carefully about this interface
+  const std::vector<Eigen::Tensor<dtype, 2>> &factor_matrices() {
+    return factor_matrices_;
+  }
+  const Eigen::Tensor<dtype, 1> &weights() { return weights_; }
   size_t ndims() const { return size_t(factor_matrices_.size()); }
   size_t ncomponents() const { return size_t(weights_.size()); }
   dtype norm() const {
@@ -91,6 +101,92 @@ public:
     }
     throw std::invalid_argument(
         "Permutations not equal to number of components aren't supported yet");
+  }
+
+  void normalize(size_t mode, int normtype = 2) {
+    if (mode >= ndims()) {
+      throw std::invalid_argument("Mode parameter is invalid; must be in the "
+                                  "range of number of dimensions");
+    }
+    std::array<long, 2> offsets({0, 0});
+    std::array<long, 2> extents({0, 1});
+    for (long r = 0; r < ncomponents(); ++r) {
+      offsets = {0, r};
+      extents = {factor_matrices_[mode].dimension(0), 1};
+      Eigen::Tensor<dtype, 2> slice =
+          factor_matrices_[mode].slice(offsets, extents);
+      // Look at if I can take an overloaded op as an argument to reduce the
+      // need to make concrete first
+      dtype tmp = p_norm(slice, normtype);
+      if (tmp > 0.) {
+        factor_matrices_[mode].slice(offsets, extents) =
+            slice * dtype(1. / tmp);
+      }
+      weights_[r] *= tmp;
+    }
+  }
+
+  void normalize(std::optional<size_t> weight_factor = std::nullopt,
+                 bool sort = false, int normtype = 2) {
+    normalize(weight_factor, sort, normtype, false);
+  }
+
+  void normalize(bool all_weights, bool sort = false, int normtype = 2) {
+    normalize(std::nullopt, sort, normtype, all_weights);
+  }
+
+  // This is a little clunky stil, continue brainstorming options
+  // I still like a builder method here, but that might just be from looking at
+  // the rust
+  void normalize(std::optional<size_t> weight_factor, bool sort = false,
+                 int normtype = 2, bool all_weights = false) {
+    for (size_t mode = 0; mode < ndims(); ++mode) {
+      normalize(mode, normtype);
+    }
+    // Check that all weights are positive, flip sign of columns in first factor
+    // matrix if negative weight found
+    std::array<long, 2> extents({factor_matrices_[0].dimension(0), 1});
+    for (long i = 0; i < ncomponents(); ++i) {
+      if (weights_(i) < 0.) {
+        weights_(i) *= -1.;
+        std::array<long, 2> offsets({0, i});
+        factor_matrices_[0].slice(offsets, extents) =
+            factor_matrices_[0].slice(offsets, extents) * dtype(-1.);
+      }
+    }
+
+    // Absorb weight into factors
+    if (all_weights) {
+      // All factors
+      Eigen::Tensor<dtype, 2> d(weights_.size(), weights_.size());
+      d.setZero();
+      for (auto i = 0; i < weights_.size(); ++i) {
+        d(i, i) = std::pow(weights_(i), dtype(1. / dtype(ndims())));
+      }
+      std::array<Eigen::IndexPair<int>, 1> dot_product = {
+          Eigen::IndexPair<int>(1, 0)};
+      for (auto i = 0; i < ndims(); ++i) {
+        factor_matrices_[i] = factor_matrices_[i].contract(d, dot_product);
+      }
+      weights_.setConstant(1.);
+    } else if (weight_factor.has_value()) {
+      // Single factor
+      auto idx = weight_factor.value();
+      Eigen::Tensor<dtype, 2> d(weights_.size(), weights_.size());
+      d.setZero();
+      for (auto i = 0; i < weights_.size(); ++i) {
+        d(i, i) = weights_(i);
+      }
+      std::array<Eigen::IndexPair<int>, 1> dot_product = {
+          Eigen::IndexPair<int>(1, 0)};
+      factor_matrices_[idx] = factor_matrices_[idx].contract(d, dot_product);
+      weights_.setConstant(1.);
+    }
+
+    if (sort && ncomponents() > 1) {
+      auto p = argsort(weights_);
+      arrange(p);
+    }
   }
 };
 

@@ -2,6 +2,19 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+template <typename dtype>
+void check_matrix(Eigen::Tensor<dtype, 2> first,
+                  Eigen::Tensor<dtype, 2> second) {
+  REQUIRE(first.dimension(0) == second.dimension(0));
+  REQUIRE(first.dimension(1) == second.dimension(1));
+  for (auto i = 0; i < first.dimension(0); ++i) {
+    for (auto j = 0; j < first.dimension(1); ++j) {
+      REQUIRE_THAT(first(i, j),
+                   Catch::Matchers::WithinRel(second(i, j), 1e-8f));
+    }
+  }
+}
+
 TEST_CASE("Dense Constructor", "[dense]") {
   Eigen::Tensor<float, 3> original(1, 2, 3);
   ttb::Dense foo(original);
@@ -58,23 +71,11 @@ TEST_CASE("Dense mttkrp", "[dense]") {
   m2 /= m2.constant(2.0);
 
   auto result = tensor.mttkrp(factors, 0);
-  for (auto i = 0; i < 2; ++i) {
-    for (auto j = 0; j < 2; ++j) {
-      REQUIRE_THAT(result(i, j), Catch::Matchers::WithinRel(m0(i, j), 1e-8f));
-    }
-  }
+  check_matrix(result, m0);
 
   result = tensor.mttkrp(factors, 1);
-  for (auto i = 0; i < 2; ++i) {
-    for (auto j = 0; j < 2; ++j) {
-      REQUIRE_THAT(result(i, j), Catch::Matchers::WithinRel(m1(i, j), 1e-8f));
-    }
-  }
+  check_matrix(result, m1);
 
   result = tensor.mttkrp(factors, 2);
-  for (auto i = 0; i < 2; ++i) {
-    for (auto j = 0; j < 2; ++j) {
-      REQUIRE_THAT(result(i, j), Catch::Matchers::WithinRel(m2(i, j), 1e-8f));
-    }
-  }
+  check_matrix(result, m2);
 }
